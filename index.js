@@ -54,28 +54,29 @@ app.post('/tasks', async (request, response) => {
 });
 
 // PUT /tasks/:id - Update a task's status
-app.put('/tasks/:id', (request, response) => {
-    const taskId = parseInt(request.params.id, 10);
+app.put('/tasks/:id', async (request, response) => {
+    const { id } = request.params;
     const { status } = request.body;
-    const task = tasks.find(t => t.id === taskId);
-
-    if (!task) {
-        return response.status(404).json({ error: 'Task not found' });
+    try {
+        const result = await pool.query('UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+        response.json({ message: 'Task updated successfully' });
+    } 
+    catch (error) {
+        response.status(500).json({ error: "Internal Server Error" });
     }
-    task.status = status;
-    response.json({ message: 'Task updated successfully' });
 });
 
-// DELETE /tasks/:id - Delete a task
-app.delete('/tasks/:id', (request, response) => {
-    const taskId = parseInt(request.params.id, 10);
-    const initialLength = tasks.length;
-    tasks = tasks.filter(t => t.id !== taskId);
 
-    if (tasks.length === initialLength) {
-        return response.status(404).json({ error: 'Task not found' });
+// DELETE /tasks/:id - Delete a task
+app.delete('/tasks/:id', async (request, response) => {
+    const { id } = request.params;
+    try {
+        const result = await pool.query('DELETE FROM tasks WHERE id = $1 RETURNING *', [id]);
+        response.json({ message: 'Task deleted successfully' });
+    } 
+    catch (error) {
+        response.status(500).json({ error: "Internal Server Error" });
     }
-    response.json({ message: 'Task deleted successfully' });
 });
 
 app.listen(PORT, () => {
