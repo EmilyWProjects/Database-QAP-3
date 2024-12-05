@@ -26,19 +26,31 @@ async function createTable() {
 createTable();
 
 // GET /tasks - Get all tasks
-app.get('/tasks', (req, res) => {
-    res.json(tasks);
+app.get("/tasks", async (request, response) => {
+    //Select task
+    try {
+        const result = await pool.query('SELECT * FROM tasks');
+        response.json(result.rows);
+    } 
+    //Make sure it works
+    catch (error) {
+        response.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
 // POST /tasks - Add a new task
-app.post('/tasks', (request, response) => {
+app.post('/tasks', async (request, response) => {
     const { id, description, status } = request.body;
     if (!id || !description || !status) {
         return response.status(400).json({ error: 'All fields (id, description, status) are required' });
     }
-
-    tasks.push({ id, description, status });
-    response.status(201).json({ message: 'Task added successfully' });
+    try {
+        const result = await pool.query('INSERT INTO tasks (id, description, status) VALUES ($1, $2, $3)', [id, description, status]);
+        response.status(201).json({ message: 'Task added successfully' });
+    } 
+    catch (error) {
+        response.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
 // PUT /tasks/:id - Update a task's status
