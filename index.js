@@ -1,13 +1,29 @@
 const express = require('express');
 const app = express();
 const PORT = 3000;
+const { Pool } = require('pg');
 
 app.use(express.json());
 
-let tasks = [
-    { id: 1, description: 'Buy groceries', status: 'incomplete' },
-    { id: 2, description: 'Read a book', status: 'complete' },
-];
+const pool = new Pool({
+    user: 'postgres',
+    host: 'localhost',
+    database: 'DatabaseQAPThree',
+    password: 'PostgresPassword',
+    port: 5432,
+});
+
+async function createTable() {
+    //Tasks
+    await pool.query (`
+      CREATE TABLE IF NOT EXISTS tasks (
+      id SERIAL PRIMARY KEY,
+      description VARCHAR(255) NOT NULL,
+      status VARCHAR(255)
+     )`
+    )
+};
+createTable();
 
 // GET /tasks - Get all tasks
 app.get('/tasks', (req, res) => {
